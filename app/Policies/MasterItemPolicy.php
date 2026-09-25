@@ -30,4 +30,9 @@ class MasterItemPolicy
     {
         return $user->isSuperAdmin();
     }
+
+    public function restore(User $user, MasterItem $item): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

@@ -1,7 +1,12 @@
 <div>
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold">Master Supplier</h2>
-        <button wire:click="$toggle('showForm')" class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5">+ Tambah</button>
+        <div class="flex items-center gap-4">
+            <label class="text-sm flex items-center gap-2">
+                <input type="checkbox" wire:model.live="showTrashed"> Tampilkan yang dihapus
+            </label>
+            <button wire:click="$toggle('showForm')" class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5">+ Tambah</button>
+        </div>
     </div>
 
     @if(session('status')) <div class="mb-3 text-sm text-green-700 bg-green-50 rounded p-2">{{ session('status') }}</div> @endif
@@ -27,7 +32,11 @@
                         <td class="py-2 px-3">{{ $s->npwp }}</td>
                         <td class="py-2 px-3">{{ $s->alamat }}</td>
                         <td class="py-2 px-3">
-                            <button wire:click="delete({{ $s->id }})" wire:confirm="Hapus supplier ini?" class="text-red-600 hover:underline">Hapus</button>
+                            @if($showTrashed)
+                                <button wire:click="restore({{ $s->id }})" wire:confirm="Restore supplier ini?" class="text-indigo-600 hover:underline">Restore</button>
+                            @else
+                                <button wire:click="delete({{ $s->id }})" wire:confirm="Hapus supplier ini?" class="text-red-600 hover:underline">Hapus</button>
+                            @endif
                         </td>
                     </tr>
                 @endforeach

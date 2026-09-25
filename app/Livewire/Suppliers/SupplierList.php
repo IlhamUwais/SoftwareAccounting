@@ -17,6 +17,12 @@ class SupplierList extends Component
     public string $npwp = '';
     public ?string $alamat = null;
     public bool $showForm = false;
+    public bool $showTrashed = false;
+
+    public function updatedShowTrashed(): void
+    {
+        $this->resetPage();
+    }
 
     public function save(): void
     {
@@ -44,12 +50,22 @@ class SupplierList extends Component
         $supplier = Supplier::findOrFail($id);
         $this->authorize('delete', $supplier);
         $supplier->delete();
+        session()->flash('status', 'Supplier berhasil dihapus.');
+    }
+
+    public function restore(int $id): void
+    {
+        $supplier = Supplier::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $supplier);
+        $supplier->restore();
+        session()->flash('status', 'Supplier berhasil dipulihkan.');
     }
 
     public function render()
     {
         return view('livewire.suppliers.supplier-list', [
             'suppliers' => Supplier::where('customer_id', TenantContext::currentCustomerId())
+                ->when($this->showTrashed, fn ($q) => $q->onlyTrashed())
                 ->orderBy('nama')->paginate(15),
         ]);
     }

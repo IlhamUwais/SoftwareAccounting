@@ -17,6 +17,7 @@
                 @auth
                     @if(auth()->user()->isSuperAdmin())
                         <a href="{{ route('customers.index') }}" wire:navigate class="text-sm text-gray-600 hover:text-indigo-700">Daftar Customer</a>
+                        <a href="{{ route('audit-logs.index') }}" wire:navigate class="text-sm text-gray-600 hover:text-indigo-700">Audit Log</a>
                     @endif
                     <a href="{{ route('dashboard') }}" wire:navigate class="text-sm text-gray-600 hover:text-indigo-700">Dashboard</a>
                     <a href="{{ route('purchases.index') }}" wire:navigate class="text-sm text-gray-600 hover:text-indigo-700">Pembelian</a>
@@ -28,10 +29,21 @@
             </div>
 
             @auth
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Keluar</button>
-                </form>
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('profile') }}" wire:navigate class="text-sm font-medium text-gray-700 hover:text-indigo-700 flex items-center gap-1.5">
+                        <span class="bg-indigo-100 text-indigo-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold uppercase">
+                            {{ substr(auth()->user()->username, 0, 1) }}
+                        </span>
+                        <span>{{ auth()->user()->username }}</span>
+                        @if(auth()->user()->customer)
+                            <span class="text-xs text-gray-400">({{ auth()->user()->customer->nama_perusahaan }})</span>
+                        @endif
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="text-sm text-gray-500 hover:text-red-600">Keluar</button>
+                    </form>
+                </div>
             @endauth
         </div>
     </nav>

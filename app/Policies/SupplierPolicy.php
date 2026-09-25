@@ -30,4 +30,9 @@ class SupplierPolicy
     {
         return $user->isSuperAdmin();
     }
+
+    public function restore(User $user, Supplier $supplier): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

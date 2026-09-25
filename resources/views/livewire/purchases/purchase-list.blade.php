@@ -1,9 +1,16 @@
 <div>
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold">Daftar Pembelian</h2>
-        <label class="text-sm flex items-center gap-2">
-            <input type="checkbox" wire:model.live="showTrashed"> Tampilkan yang dihapus
-        </label>
+        <div class="flex items-center gap-4">
+            <label class="text-sm flex items-center gap-2">
+                <input type="checkbox" wire:model.live="showTrashed"> Tampilkan yang dihapus
+            </label>
+            @if(auth()->user()->isSuperAdmin())
+                <a href="{{ route('purchases.upload') }}" wire:navigate class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5 hover:bg-indigo-700">
+                    + Upload FPM
+                </a>
+            @endif
+        </div>
     </div>
 
     @if(session('status')) <div class="mb-3 text-sm text-green-700 bg-green-50 rounded p-2">{{ session('status') }}</div> @endif
@@ -30,6 +37,9 @@
                         <td class="py-2 px-3">Rp {{ number_format($p->termin, 0, ',', '.') }}</td>
                         <td class="py-2 px-3">Rp {{ number_format($p->ppn, 0, ',', '.') }}</td>
                         <td class="py-2 px-3">
+                            @if(auth()->user()->isSuperAdmin() && $p->purchase_document_id)
+                                <a href="{{ route('files.purchase-document', $p->purchase_document_id) }}" target="_blank" class="text-emerald-600 hover:underline mr-2">PDF</a>
+                            @endif
                             @if($showTrashed)
                                 <button wire:click="restore({{ $p->id }})" wire:confirm="Restore transaksi ini?"
                                         class="text-indigo-600 hover:underline">Restore</button>

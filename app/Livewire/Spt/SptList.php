@@ -41,6 +41,18 @@ class SptList extends Component
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'file.required' => 'File SPT wajib dipilih.',
+            'file.mimes' => 'Format file SPT tidak valid. Format yang didukung: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX.',
+            'file.max' => 'Ukuran file SPT maksimal 10 MB.',
+            'proofFile.required' => 'File bukti bayar wajib dipilih.',
+            'proofFile.mimes' => 'Format bukti bayar tidak valid. Format yang didukung: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX.',
+            'proofFile.max' => 'Ukuran file bukti bayar maksimal 10 MB.',
+        ];
+    }
+
     public function save(): void
     {
         $this->authorize('create', SptDocument::class);
