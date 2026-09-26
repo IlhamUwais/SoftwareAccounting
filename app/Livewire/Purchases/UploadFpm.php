@@ -25,15 +25,17 @@ class UploadFpm extends Component
     protected function rules(): array
     {
         return [
+            'files' => 'required|array|min:1',
             'files.*' => 'required|file|mimes:pdf|max:10240', // 10MB per file
         ];
     }
 
-    public function upload(): void
+    public function prosessupload(): void
     {
         abort_unless(Auth::user()->isSuperAdmin(), 403);
-
+        
         $this->validate();
+        
 
         $customerId = TenantContext::currentCustomerId();
         abort_unless($customerId, 400, 'Pilih customer terlebih dahulu.');

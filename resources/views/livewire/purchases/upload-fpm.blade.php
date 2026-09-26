@@ -17,7 +17,7 @@
         <div wire:loading wire:target="files" class="text-sm text-indigo-600 mt-2">Mengunggah file ke server...</div>
 
         <div class="mt-4">
-            <button wire:click="upload" wire:loading.attr="disabled"
+            <button wire:click="prosessupload" wire:loading.attr="disabled"
                     class="bg-indigo-600 text-white rounded px-5 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
                 Mulai Proses Ekstraksi
             </button>
