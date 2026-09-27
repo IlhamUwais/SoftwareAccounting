@@ -104,21 +104,20 @@ class FpmPdfParser
         return sprintf('%04d-%02d-%02d', (int) $year, $month, (int) $day);
     }
 
-    private function extractSupplier(string $text): array
-    {
-        // The "Pengusaha Kena Pajak" block is the seller (supplier) identity.
-        preg_match(
-            '/Pengusaha Kena Pajak:\s*Nama\s*:\s*(.+?)\s*Alamat\s*:\s*(.+?)\s*NPWP\s*:\s*([0-9]+)/is',
-            $text,
-            $m
-        );
+private function extractSupplier(string $text): array
+{
+    preg_match(
+        '/Pengusaha Kena Pajak:\s*Nama\s*:\s*(.+?)\s*Alamat\s*:\s*(.+?)\s*NPWP\s*:\s*([0-9]+)/is',
+        $text,
+        $m
+    );
 
-        return [
-            'nama' => isset($m[1]) ? trim($m[1]) : null,
-            'alamat' => isset($m[2]) ? trim($m[2]) : null,
-            'npwp' => $m[3] ?? null,
-        ];
-    }
+    return [
+        'nama' => isset($m[1]) ? trim(preg_replace('/\s+/', ' ', $m[1])) : null,
+        'alamat' => isset($m[2]) ? trim(preg_replace('/\s+/', ' ', $m[2])) : null,
+        'npwp' => $m[3] ?? null,
+    ];
+}
 
     private function extractItems(string $text): array
     {
@@ -157,16 +156,14 @@ class FpmPdfParser
         ];
     }
 
-    private function extractLabeledAmount(string $text, string $labelPattern): ?string
-    {
-        if (preg_match('/'.$labelPattern.'\s*([0-9.,]+)/iu', $text, $m)) {
-            return $this->toDecimal($m[1]);
-        }
-
-        // Field genuinely absent on this PDF (e.g. "Uang Muka" often has
-        // no value at all) - caller decides whether that's acceptable.
-        return null;
+private function extractLabeledAmount(string $text, string $labelPattern): ?string
+{
+    if (preg_match('/'.$labelPattern.'[^\t\n]*\t+([0-9.,]+)/iu', $text, $m)) {
+        return $this->toDecimal($m[1]);
     }
+
+    return null;
+}
 
     /**
      * Converts Indonesian-formatted number ("430.000,00") to a plain
