@@ -14,12 +14,12 @@ class Customer extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    protected $fillable = ['nama_perusahaan', 'status'];
+    protected $fillable = ['nama_perusahaan', 'npwp', 'status'];
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['nama_perusahaan', 'status'])
+            ->logOnly(['nama_perusahaan', 'npwp', 'status'])
             ->logOnlyDirty();
     }
 

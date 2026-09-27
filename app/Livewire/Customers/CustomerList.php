@@ -13,12 +13,14 @@ use Livewire\Component;
 class CustomerList extends Component
 {
     public string $nama_perusahaan = '';
+    public string $npwp = '';
     public string $username = '';
     public string $password = '';
     public bool $showForm = false;
 
     public ?int $editingCustomerId = null;
     public string $edit_nama_perusahaan = '';
+    public string $edit_npwp = '';
     public string $edit_username = '';
     public string $edit_password = '';
 
@@ -36,9 +38,11 @@ class CustomerList extends Component
             'nama_perusahaan' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username',
             'password' => 'required|string|min:8',
+            'npwp' => 'required|string|max:255',
+            
         ]);
 
-        $customer = Customer::create(['nama_perusahaan' => $this->nama_perusahaan]);
+        $customer = Customer::create(['nama_perusahaan' => $this->nama_perusahaan, 'npwp' => $this->npwp]);
 
         User::create([
             'username' => $this->username,
@@ -47,7 +51,7 @@ class CustomerList extends Component
             'customer_id' => $customer->id,
         ]);
 
-        $this->reset(['nama_perusahaan', 'username', 'password', 'showForm']);
+        $this->reset(['nama_perusahaan', 'username', 'password', 'npwp','showForm']);
         session()->flash('status', 'Customer baru berhasil dibuat.');
     }
 
@@ -60,11 +64,12 @@ class CustomerList extends Component
         $this->edit_username = $customer->user?->username ?? '';
         $this->edit_password = '';
         $this->showForm = false;
+        $this->edit_npwp = $customer->npwp;
     }
 
     public function cancelEdit(): void
     {
-        $this->reset(['editingCustomerId', 'edit_nama_perusahaan', 'edit_username', 'edit_password']);
+        $this->reset(['editingCustomerId', 'edit_nama_perusahaan', 'edit_username', 'edit_password','edit_npwp']);
     }
 
     public function updateCustomer(): void
@@ -78,9 +83,10 @@ class CustomerList extends Component
             'edit_nama_perusahaan' => 'required|string|max:255',
             'edit_username' => 'required|string|max:255|unique:users,username,' . $userId,
             'edit_password' => 'nullable|string|min:8',
+            'edit_npwp' => 'required|string|max:255',
         ]);
 
-        $customer->update(['nama_perusahaan' => $this->edit_nama_perusahaan]);
+        $customer->update(['nama_perusahaan' => $this->edit_nama_perusahaan,'npwp' => $this->edit_npwp]);
 
         if ($customer->user) {
             $customer->user->username = $this->edit_username;

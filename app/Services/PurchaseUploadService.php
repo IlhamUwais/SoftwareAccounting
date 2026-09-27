@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\MasterItem;
 use App\Models\Purchase;
 use App\Models\PurchaseDocument;
@@ -26,6 +27,19 @@ class PurchaseUploadService
     public function handle(int $customerId, int $uploadedByUserId, string $absoluteTmpPath, string $originalFilename): Purchase
     {
         $parsed = $this->parser->parse($absoluteTmpPath);
+
+        // --- Validasi kepemilikan FPM ---
+        // Jika customer memiliki NPWP terdaftar, cocokkan dengan NPWP pembeli
+        // yang tertera di dalam dokumen FPM. Jika tidak cocok, tolak upload.
+        $customer = Customer::findOrFail($customerId);
+        if ($customer->npwp && $parsed['buyer_npwp'] !== null) {
+            $customerNpwp = preg_replace('/[^0-9]/', '', $customer->npwp);
+            $pdfBuyerNpwp = preg_replace('/[^0-9]/', '', $parsed['buyer_npwp']);
+
+            if ($customerNpwp !== $pdfBuyerNpwp) {
+                throw new FpmParseException('Faktur pajak yang anda upload ini milik orang lain.');
+            }
+        }
 
         // Uniqueness check: nomor_faktur must be unique among ACTIVE
         // purchases for this customer (soft-deleted ones don't block reuse).

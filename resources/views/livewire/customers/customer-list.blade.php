@@ -48,6 +48,19 @@
         @enderror
     </div>
 
+    <div>
+        <input
+            type="text"
+            wire:model="npwp"
+            placeholder="NPWP"
+            class="rounded border-gray-300 text-sm w-full"
+        >
+
+        @error('npwp')
+            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+        @enderror
+    </div>
+
     <button
         type="submit"
         class="col-span-3 bg-indigo-600 text-white rounded py-1.5 text-sm"

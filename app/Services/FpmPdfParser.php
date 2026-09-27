@@ -56,16 +56,20 @@ class FpmPdfParser
 
         $totals = $this->extractTotals($text);
 
+        // NPWP pembeli – digunakan untuk memvalidasi kepemilikan FPM
+        $buyerNpwp = $this->extractBuyerNpwp($text);
+
         return [
-            'nomor_faktur' => $nomorFaktur,
+            'nomor_faktur'  => $nomorFaktur,
             'tanggal_faktur' => $tanggalFaktur,
-            'supplier' => $supplier,
-            'items' => $items,
-            'termin' => $totals['termin'],
-            'potongan' => $totals['potongan'],
-            'uang_muka' => $totals['uang_muka'],
-            'dpp' => $totals['dpp'],
-            'ppn' => $totals['ppn'],
+            'supplier'      => $supplier,
+            'buyer_npwp'    => $buyerNpwp,
+            'items'         => $items,
+            'termin'        => $totals['termin'],
+            'potongan'      => $totals['potongan'],
+            'uang_muka'     => $totals['uang_muka'],
+            'dpp'           => $totals['dpp'],
+            'ppn'           => $totals['ppn'],
         ];
     }
 
@@ -73,6 +77,37 @@ class FpmPdfParser
     {
         if (preg_match('/Kode dan Nomor Seri Faktur Pajak\s*:\s*([0-9]+)/i', $text, $m)) {
             return trim($m[1]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Ekstrak NPWP pembeli dari blok "Pembeli Barang Kena Pajak /
+     * Penerima Jasa Kena Pajak" di PDF FPM Coretax.
+     * Hanya digit yang diambil (strip/titik dihapus) sehingga hasilnya
+     * selalu berupa string 16 angka atau null jika tidak ditemukan.
+     */
+    private function extractBuyerNpwp(string $text): ?string
+    {
+        // Format Coretax: "Pembeli Barang Kena Pajak / Penerima Jasa Kena Pajak:
+        //   Nama  : PT XYZ
+        //   Alamat: ...
+        //   NPWP  : 1234567890123456"
+        if (preg_match(
+            '/Pembeli Barang Kena Pajak.*?NPWP\s*:\s*([0-9]{15,16})/is',
+            $text,
+            $m
+        )) {
+            return preg_replace('/[^0-9]/', '', $m[1]);
+        }
+
+        // Fallback: cari baris "NPWP" kedua (setelah supplier) yang biasanya milik pembeli
+        if (preg_match_all('/NPWP\s*:\s*([0-9]{15,16})/i', $text, $all)) {
+            // Index 1 = pembeli (index 0 = supplier)
+            if (isset($all[1][1])) {
+                return preg_replace('/[^0-9]/', '', $all[1][1]);
+            }
         }
 
         return null;
