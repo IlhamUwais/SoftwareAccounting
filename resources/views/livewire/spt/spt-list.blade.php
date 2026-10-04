@@ -1,72 +1,157 @@
 <div>
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">SPT</h2>
+    {{-- ── Header ── --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+            <h1 class="page-title">SPT</h1>
+            <p class="page-subtitle">Surat Pemberitahuan Tahunan &amp; bukti pembayaran</p>
+        </div>
         @can('create', \App\Models\SptDocument::class)
-            <button wire:click="$toggle('showForm')" class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5">+ Upload SPT</button>
+            <button wire:click="$toggle('showForm')" class="btn-primary text-navy-900 self-start">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                Upload SPT
+            </button>
         @endcan
     </div>
 
-    @if(session('status')) <div class="mb-3 text-sm text-green-700 bg-green-50 rounded p-2">{{ session('status') }}</div> @endif
-
-    @if($showForm)
-        <form wire:submit="save" class="bg-white rounded-lg shadow p-4 mb-4 space-y-3">
-            <select wire:model="jenis_spt" class="w-full rounded border-gray-300 text-sm">
-                @foreach(\App\Models\SptDocument::JENIS_OPTIONS as $val => $label)
-                    <option value="{{ $val }}">{{ $label }}</option>
-                @endforeach
-            </select>
-            <div class="grid grid-cols-2 gap-3">
-                <input type="date" wire:model="period_start" class="rounded border-gray-300 text-sm">
-                <input type="date" wire:model="period_end" class="rounded border-gray-300 text-sm">
-            </div>
-            <input type="file" wire:model="file" class="text-sm">
-            @error('file') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-            <p class="text-xs text-gray-400">Format diizinkan: PDF, JPG, JPEG, PNG, DOC, DOCX, XLS, XLSX (maks 10MB)</p>
-            <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-1.5 text-sm">Upload</button>
-        </form>
+    {{-- Flash --}}
+    @if(session('status'))
+        <div class="alert-success mb-4">{{ session('status') }}</div>
     @endif
 
-    <div class="space-y-3">
-        @foreach($sptDocuments as $spt)
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex justify-between items-start">
+    {{-- ── Upload form ── --}}
+    @if($showForm)
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-sm font-semibold text-navy-800">Upload SPT Baru</h2>
+            </div>
+            <div class="card-body">
+                <form wire:submit="save" class="space-y-4">
                     <div>
-                        <p class="font-medium text-sm">{{ \App\Models\SptDocument::JENIS_OPTIONS[$spt->jenis_spt] }}</p>
-                        <p class="text-xs text-gray-500">{{ $spt->period_start->format('d M Y') }} — {{ $spt->period_end->format('d M Y') }}</p>
-                        <a href="{{ route('files.spt', $spt) }}" class="text-xs text-indigo-600">{{ $spt->original_filename }} (download)</a>
+                        <label class="form-label">Jenis SPT</label>
+                        <select wire:model="jenis_spt" class="form-select max-w-sm">
+                            @foreach(\App\Models\SptDocument::JENIS_OPTIONS as $val => $label)
+                                <option value="{{ $val }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    @can('delete', $spt)
-                        <button wire:click="delete({{ $spt->id }})" wire:confirm="Hapus SPT ini?" class="text-xs text-red-600">Hapus</button>
-                    @endcan
-                </div>
-
-                <div class="mt-3 pl-2 border-l-2 border-gray-100">
-                    <p class="text-xs text-gray-500 mb-1">Bukti Bayar:</p>
-                    @forelse($spt->paymentProofs as $proof)
-                        <div class="flex justify-between items-center text-xs mb-1">
-                            <a href="{{ route('files.spt-proof', $proof) }}" class="text-indigo-600">{{ $proof->original_filename }}</a>
-                            @can('delete', $proof)
-                                <button wire:click="deleteProof({{ $proof->id }})" wire:confirm="Hapus bukti bayar ini?" class="text-red-500">✕</button>
-                            @endcan
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-sm">
+                        <div>
+                            <label class="form-label">Periode Mulai</label>
+                            <input type="date" wire:model="period_start" class="form-input">
                         </div>
-                    @empty
-                        <p class="text-xs text-gray-300">Belum ada bukti bayar.</p>
-                    @endforelse
+                        <div>
+                            <label class="form-label">Periode Akhir</label>
+                            <input type="date" wire:model="period_end" class="form-input">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">File Dokumen</label>
+                        <input type="file" wire:model="file"
+                               class="block w-full text-sm text-navy-600
+                                      file:mr-4 file:py-2 file:px-4
+                                      file:rounded-lg file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-gold-500 file:text-navy-900
+                                      hover:file:bg-gold-600 file:cursor-pointer file:transition-colors">
+                        @error('file') <p class="form-error">{{ $message }}</p> @enderror
+                        <p class="text-xs text-navy-400 mt-1.5">Format diizinkan: PDF, JPG, JPEG, PNG, DOC, DOCX, XLS, XLSX (maks 10MB)</p>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn-primary text-navy-900">Upload SPT</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 
-                    @can('create', \App\Models\SptPaymentProof::class)
-                        @if($addProofToSptId === $spt->id)
-                            <div class="flex items-center gap-2 mt-2">
-                                <input type="file" wire:model="proofFile" class="text-xs">
-                                <button wire:click="addProof" class="text-xs text-indigo-600">Simpan</button>
+    {{-- ── SPT document list ── --}}
+    <div class="space-y-4">
+        @foreach($sptDocuments as $spt)
+            <div class="card">
+                <div class="card-body">
+                    {{-- Document info header --}}
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div>
+                            <p class="font-semibold text-navy-900">
+                                {{ \App\Models\SptDocument::JENIS_OPTIONS[$spt->jenis_spt] }}
+                            </p>
+                            <p class="text-xs text-navy-500 mt-0.5">
+                                {{ $spt->period_start->format('d M Y') }} &mdash; {{ $spt->period_end->format('d M Y') }}
+                            </p>
+                            <a href="{{ route('files.spt', $spt) }}"
+                               class="inline-flex items-center gap-1 text-xs text-gold-600 hover:text-gold-800 font-medium mt-1.5 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                {{ $spt->original_filename }}
+                            </a>
+                        </div>
+                        @can('delete', $spt)
+                            <button wire:click="delete({{ $spt->id }})"
+                                    wire:confirm="Hapus SPT ini?"
+                                    class="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors self-start">
+                                Hapus
+                            </button>
+                        @endcan
+                    </div>
+
+                    {{-- Payment proofs section --}}
+                    <div class="mt-4 pt-3 border-t border-navy-50">
+                        <p class="text-xs font-semibold text-navy-500 mb-2">Bukti Bayar</p>
+
+                        @forelse($spt->paymentProofs as $proof)
+                            <div class="flex items-center justify-between py-1.5">
+                                <a href="{{ route('files.spt-proof', $proof) }}"
+                                   class="flex items-center gap-1.5 text-xs text-gold-600 hover:text-gold-800 font-medium transition-colors">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                                    </svg>
+                                    {{ $proof->original_filename }}
+                                </a>
+                                @can('delete', $proof)
+                                    <button wire:click="deleteProof({{ $proof->id }})"
+                                            wire:confirm="Hapus bukti bayar ini?"
+                                            class="text-xs text-red-400 hover:text-red-600 transition-colors ml-3 flex-shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                @endcan
                             </div>
-                            @error('proofFile') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        @else
-                            <button wire:click="$set('addProofToSptId', {{ $spt->id }})" class="text-xs text-indigo-600 mt-1">+ Tambah bukti bayar</button>
-                        @endif
-                    @endcan
+                        @empty
+                            <p class="text-xs text-navy-300">Belum ada bukti bayar.</p>
+                        @endforelse
+
+                        @can('create', \App\Models\SptPaymentProof::class)
+                            @if($addProofToSptId === $spt->id)
+                                <div class="flex flex-wrap items-center gap-3 mt-3 pt-2 border-t border-navy-50">
+                                    <input type="file" wire:model="proofFile"
+                                           class="text-xs text-navy-600
+                                                  file:mr-3 file:py-1.5 file:px-3
+                                                  file:rounded-md file:border-0
+                                                  file:text-xs file:font-semibold
+                                                  file:bg-navy-100 file:text-navy-700
+                                                  hover:file:bg-navy-200 file:cursor-pointer file:transition-colors">
+                                    <button wire:click="addProof" class="btn-secondary text-xs px-3 py-1.5">Simpan</button>
+                                </div>
+                                @error('proofFile') <p class="form-error">{{ $message }}</p> @enderror
+                            @else
+                                <button wire:click="$set('addProofToSptId', {{ $spt->id }})"
+                                        class="mt-2 text-xs font-semibold text-navy-500 hover:text-navy-800 transition-colors flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    Tambah bukti bayar
+                                </button>
+                            @endif
+                        @endcan
+                    </div>
                 </div>
             </div>
         @endforeach
     </div>
-    <div class="mt-4">{{ $sptDocuments->links() }}</div>
+
+    <div class="mt-5">{{ $sptDocuments->links() }}</div>
 </div>

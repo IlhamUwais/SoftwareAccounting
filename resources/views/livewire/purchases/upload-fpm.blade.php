@@ -1,122 +1,171 @@
 <div>
-    <div class="flex justify-between items-center mb-4">
+    {{-- ── Header ── --}}
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div>
-            <h2 class="text-lg font-semibold">Upload FPM (Faktur Pajak Masukan)</h2>
-            <p class="text-xs text-gray-500">Unggah file PDF faktur pajak masukan secara batch</p>
+            <h1 class="page-title">Upload FPM</h1>
+            <p class="page-subtitle">Unggah file PDF faktur pajak masukan secara batch</p>
         </div>
-        <a href="{{ route('purchases.index') }}" wire:navigate class="text-sm text-indigo-600 hover:underline">
-            &larr; Kembali ke Pembelian
+        <a href="{{ route('purchases.index') }}" wire:navigate class="btn-secondary self-start">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Kembali ke Pembelian
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow p-5 mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File PDF</label>
-        <input type="file" wire:model="files" multiple accept="application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-        @error('files.*') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+    {{-- ── Upload card ── --}}
+    <div class="card mb-6">
+        <div class="card-header">
+            <h2 class="text-sm font-semibold text-navy-800">Pilih File PDF</h2>
+        </div>
+        <div class="card-body">
+            <input type="file" wire:model="files" multiple accept="application/pdf"
+                   class="block w-full text-sm text-navy-600
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-lg file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-gold-500 file:text-navy-900
+                          hover:file:bg-gold-600 file:cursor-pointer file:transition-colors">
+            @error('files.*')
+                <p class="form-error">{{ $message }}</p>
+            @enderror
 
-        <div wire:loading wire:target="files" class="text-sm text-indigo-600 mt-2">Mengunggah file ke server...</div>
+            {{-- Upload progress indicator --}}
+            <div wire:loading wire:target="files" class="mt-3 flex items-center gap-2 text-sm text-navy-500">
+                <svg class="w-4 h-4 animate-spin text-gold-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Mengunggah file ke server...
+            </div>
 
-        <div class="mt-4">
-            <button wire:click="prosessupload" wire:loading.attr="disabled"
-                    class="bg-indigo-600 text-white rounded px-5 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
-                Mulai Proses Ekstraksi
-            </button>
+            <div class="mt-5 flex items-center gap-3">
+                <button wire:click="prosessupload"
+                        wire:loading.attr="disabled"
+                        class="btn-primary text-navy-900">
+                    <svg wire:loading.remove wire:target="prosessupload" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <svg wire:loading wire:target="prosessupload" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    Mulai Proses Ekstraksi
+                </button>
+                <p class="text-xs text-navy-400" wire:loading.remove wire:target="prosessupload">File akan diproses secara antrian di latar belakang.</p>
+                <p class="text-xs text-navy-500" wire:loading wire:target="prosessupload">Memproses, harap tunggu...</p>
+            </div>
         </div>
     </div>
 
+    {{-- ── Active batch detail ── --}}
     @if($batch)
-        <div class="bg-white rounded-lg shadow p-5 mb-6 border-l-4 border-indigo-500" wire:poll.3s="$refresh">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-semibold text-sm text-gray-800">
-                    Detail Batch #{{ $batch->id }} ({{ $batch->created_at->format('d/m/Y H:i:s') }})
-                </h3>
-                <button wire:click="closeBatchDetail" class="text-xs text-gray-500 hover:text-gray-800">Tutup Detail</button>
+        <div class="card mb-6 border-l-4 border-gold-500" wire:poll.3s="$refresh">
+            <div class="card-header">
+                <div>
+                    <h2 class="text-sm font-semibold text-navy-800">
+                        Batch #{{ $batch->id }}
+                        <span class="font-normal text-navy-400 ml-1 text-xs">{{ $batch->created_at->format('d/m/Y H:i:s') }}</span>
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-3 mt-1.5 text-sm">
+                        <span @class([
+                            'badge',
+                            'badge-green'  => $batch->status === 'COMPLETED',
+                            'badge-yellow' => $batch->status === 'PROCESSING',
+                            'badge-red'    => $batch->status === 'FAILED',
+                            'badge-gray'   => $batch->status === 'PENDING',
+                        ])>{{ $batch->status }}</span>
+                        <span class="text-xs text-navy-500">
+                            <span class="text-emerald-600 font-semibold">{{ $batch->success_count }} berhasil</span>,
+                            <span class="text-red-500 font-semibold">{{ $batch->failed_count }} gagal</span>
+                            dari <span class="font-semibold text-navy-700">{{ $batch->total_files }} file</span>
+                        </span>
+                    </div>
+                </div>
+                <button wire:click="closeBatchDetail"
+                        class="text-xs font-medium text-navy-400 hover:text-navy-700 transition-colors px-2 py-1 rounded hover:bg-navy-100 self-start">
+                    Tutup Detail
+                </button>
             </div>
-
-            <p class="text-sm text-gray-600 mb-3">
-                Status: <span @class([
-                    'px-2 py-0.5 rounded text-xs font-semibold uppercase',
-                    'bg-green-100 text-green-700' => $batch->status === 'COMPLETED',
-                    'bg-yellow-100 text-yellow-700' => $batch->status === 'PROCESSING',
-                    'bg-red-100 text-red-700' => $batch->status === 'FAILED',
-                    'bg-gray-100 text-gray-600' => $batch->status === 'PENDING',
-                ])>{{ $batch->status }}</span> —
-                <span class="text-green-600 font-medium">{{ $batch->success_count }} berhasil</span>,
-                <span class="text-red-600 font-medium">{{ $batch->failed_count }} gagal</span> dari
-                <span class="font-medium">{{ $batch->total_files }} file</span>
-            </p>
-
-            <table class="w-full text-sm mt-3">
-                <thead>
-                    <tr class="text-left text-gray-500 border-b bg-gray-50">
-                        <th class="py-2 px-3">Nama File</th>
-                        <th class="py-2 px-3">Status</th>
-                        <th class="py-2 px-3">Keterangan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($batch->files as $f)
-                        <tr class="border-b">
-                            <td class="py-2 px-3 font-mono text-xs">{{ $f->filename }}</td>
-                            <td class="py-2 px-3">
-                                <span @class([
-                                    'text-xs font-semibold px-2 py-0.5 rounded',
-                                    'bg-green-100 text-green-700' => $f->status === 'SUCCESS',
-                                    'bg-red-100 text-red-700' => $f->status === 'FAILED',
-                                    'bg-yellow-100 text-yellow-700' => $f->status === 'PENDING',
-                                ])>{{ $f->status }}</span>
-                            </td>
-                            <td class="py-2 px-3 text-xs text-gray-600">{{ $f->failure_reason ?? '-' }}</td>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nama File</th>
+                            <th>Status</th>
+                            <th>Keterangan</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($batch->files as $f)
+                            <tr>
+                                <td class="font-mono text-xs text-navy-700">{{ $f->filename }}</td>
+                                <td>
+                                    <span @class([
+                                        'badge',
+                                        'badge-green'  => $f->status === 'SUCCESS',
+                                        'badge-red'    => $f->status === 'FAILED',
+                                        'badge-yellow' => $f->status === 'PENDING',
+                                    ])>{{ $f->status }}</span>
+                                </td>
+                                <td class="text-xs text-navy-500">{{ $f->failure_reason ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     @endif
 
+    {{-- ── Recent batches ── --}}
     @if($recentBatches && $recentBatches->count() > 0)
-        <div class="bg-white rounded-lg shadow p-5">
-            <h3 class="text-sm font-semibold text-gray-800 mb-3">Riwayat Batch Upload Sebelumnya</h3>
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left text-gray-500 border-b bg-gray-50">
-                        <th class="py-2 px-3">ID</th>
-                        <th class="py-2 px-3">Waktu Upload</th>
-                        <th class="py-2 px-3">Total File</th>
-                        <th class="py-2 px-3">Hasil</th>
-                        <th class="py-2 px-3">Status</th>
-                        <th class="py-2 px-3">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($recentBatches as $rb)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-2 px-3 text-gray-500 font-mono text-xs">#{{ $rb->id }}</td>
-                            <td class="py-2 px-3 text-xs">{{ $rb->created_at->format('d/m/Y H:i') }}</td>
-                            <td class="py-2 px-3">{{ $rb->total_files }}</td>
-                            <td class="py-2 px-3 text-xs">
-                                <span class="text-green-600 font-medium">{{ $rb->success_count }} sukses</span>,
-                                <span class="text-red-600 font-medium">{{ $rb->failed_count }} gagal</span>
-                            </td>
-                            <td class="py-2 px-3">
-                                <span @class([
-                                    'text-xs font-semibold px-2 py-0.5 rounded',
-                                    'bg-green-100 text-green-700' => $rb->status === 'COMPLETED',
-                                    'bg-yellow-100 text-yellow-700' => $rb->status === 'PROCESSING',
-                                    'bg-red-100 text-red-700' => $rb->status === 'FAILED',
-                                    'bg-gray-100 text-gray-600' => $rb->status === 'PENDING',
-                                ])>{{ $rb->status }}</span>
-                            </td>
-                            <td class="py-2 px-3">
-                                <button wire:click="selectBatch({{ $rb->id }})" class="text-xs text-indigo-600 hover:underline">
-                                    Lihat File
-                                </button>
-                            </td>
+        <div class="card overflow-hidden">
+            <div class="card-header">
+                <h2 class="text-sm font-semibold text-navy-800">Riwayat Batch Upload</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Waktu Upload</th>
+                            <th class="text-center">Total File</th>
+                            <th>Hasil</th>
+                            <th>Status</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            <div class="mt-3">{{ $recentBatches->links() }}</div>
+                    </thead>
+                    <tbody>
+                        @foreach($recentBatches as $rb)
+                            <tr>
+                                <td class="font-mono text-xs text-navy-500">#{{ $rb->id }}</td>
+                                <td class="text-xs text-navy-600 whitespace-nowrap">{{ $rb->created_at->format('d/m/Y H:i') }}</td>
+                                <td class="text-center font-medium text-navy-800">{{ $rb->total_files }}</td>
+                                <td class="text-xs">
+                                    <span class="text-emerald-600 font-semibold">{{ $rb->success_count }} sukses</span>,
+                                    <span class="text-red-500 font-semibold">{{ $rb->failed_count }} gagal</span>
+                                </td>
+                                <td>
+                                    <span @class([
+                                        'badge',
+                                        'badge-green'  => $rb->status === 'COMPLETED',
+                                        'badge-yellow' => $rb->status === 'PROCESSING',
+                                        'badge-red'    => $rb->status === 'FAILED',
+                                        'badge-gray'   => $rb->status === 'PENDING',
+                                    ])>{{ $rb->status }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <button wire:click="selectBatch({{ $rb->id }})"
+                                            class="text-xs font-semibold text-navy-600 hover:text-navy-900 transition-colors">
+                                        Lihat File
+                                    </button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-5 py-3 border-t border-navy-50">{{ $recentBatches->links() }}</div>
         </div>
     @endif
 </div>

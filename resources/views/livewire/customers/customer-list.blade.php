@@ -1,115 +1,129 @@
 <div>
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">Daftar Customer</h2>
-        <button wire:click="$toggle('showForm')" class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5">+ Customer Baru</button>
+    {{-- ── Header ── --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+            <h1 class="page-title">Daftar Customer</h1>
+            <p class="page-subtitle">Manajemen perusahaan klien dan akun loginnya</p>
+        </div>
+        <button wire:click="$toggle('showForm')" class="btn-primary text-navy-900 self-start">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Customer Baru
+        </button>
     </div>
 
-    @if(session('status')) <div class="mb-3 text-sm text-green-700 bg-green-50 rounded p-2">{{ session('status') }}</div> @endif
+    {{-- Flash --}}
+    @if(session('status'))
+        <div class="alert-success mb-4">{{ session('status') }}</div>
+    @endif
 
+    {{-- ── Create form ── --}}
     @if($showForm)
-<form wire:submit="create" class="bg-white rounded-lg shadow p-4 mb-4 grid grid-cols-3 gap-3">
-
-    <div>
-        <input
-            type="text"
-            wire:model="nama_perusahaan"
-            placeholder="Nama perusahaan"
-            class="rounded border-gray-300 text-sm w-full"
-        >
-
-        @error('nama_perusahaan')
-            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <input
-            type="text"
-            wire:model="username"
-            placeholder="Username login"
-            class="rounded border-gray-300 text-sm w-full"
-        >
-
-        @error('username')
-            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <input
-            type="password"
-            wire:model="password"
-            placeholder="Password"
-            class="rounded border-gray-300 text-sm w-full"
-        >
-
-        @error('password')
-            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <input
-            type="text"
-            wire:model="npwp"
-            placeholder="NPWP"
-            class="rounded border-gray-300 text-sm w-full"
-        >
-
-        @error('npwp')
-            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <button
-        type="submit"
-        class="col-span-3 bg-indigo-600 text-white rounded py-1.5 text-sm"
-    >
-        Buat Customer
-    </button>
-
-</form>
-    @endif
-
-    @if($editingCustomerId)
-        <form wire:submit="updateCustomer" class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4 grid grid-cols-3 gap-3">
-            <div class="col-span-3 font-medium text-sm text-indigo-900">Edit Customer & Akun Login</div>
-            <div>
-                <label class="block text-xs text-gray-600 mb-1">Nama Perusahaan</label>
-                <input type="text" wire:model="edit_nama_perusahaan" placeholder="Nama perusahaan" class="rounded border-gray-300 text-sm w-full">
-                @error('edit_nama_perusahaan') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-sm font-semibold text-navy-800">Tambah Customer Baru</h2>
             </div>
-            <div>
-                <label class="block text-xs text-gray-600 mb-1">Username Login</label>
-                <input type="text" wire:model="edit_username" placeholder="Username login" class="rounded border-gray-300 text-sm w-full">
-                @error('edit_username') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-xs text-gray-600 mb-1">Password Baru (opsional)</label>
-                <input type="password" wire:model="edit_password" placeholder="Kosongkan jika tidak diubah" class="rounded border-gray-300 text-sm w-full">
-                @error('edit_password') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="col-span-3 flex gap-2 mt-2">
-                <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-1.5 text-sm">Simpan Perubahan</button>
-                <button type="button" wire:click="cancelEdit" class="bg-gray-200 text-gray-700 rounded px-4 py-1.5 text-sm">Batal</button>
-            </div>
-        </form>
-    @endif
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        @foreach($customers as $c)
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex justify-between items-start">
+            <div class="card-body">
+                <form wire:submit="create" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <p class="font-medium">{{ $c->nama_perusahaan }}</p>
-                        <p class="text-xs text-gray-500">{{ $c->user ? '@'.$c->user->username : 'Belum ada akun' }}</p>
+                        <label class="form-label">Nama Perusahaan</label>
+                        <input type="text" wire:model="nama_perusahaan" placeholder="Nama perusahaan" class="form-input">
+                        @error('nama_perusahaan') <p class="form-error">{{ $message }}</p> @enderror
                     </div>
-                    <span @class(['text-xs px-2 py-0.5 rounded', 'bg-green-100 text-green-700' => $c->status === 'ACTIVE', 'bg-gray-100 text-gray-500' => $c->status === 'INACTIVE'])>{{ $c->status }}</span>
+                    <div>
+                        <label class="form-label">NPWP</label>
+                        <input type="text" wire:model="npwp" placeholder="NPWP" class="form-input">
+                        @error('npwp') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Username Login</label>
+                        <input type="text" wire:model="username" placeholder="Username login" class="form-input" autocomplete="off">
+                        @error('username') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Password</label>
+                        <input type="password" wire:model="password" placeholder="Password" class="form-input" autocomplete="new-password">
+                        @error('password') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-primary text-navy-900">Buat Customer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Edit form ── --}}
+    @if($editingCustomerId)
+        <div class="card mb-6 border-l-4 border-gold-500">
+            <div class="card-header">
+                <h2 class="text-sm font-semibold text-navy-800">Edit Customer &amp; Akun Login</h2>
+                <button type="button" wire:click="cancelEdit"
+                        class="text-xs font-medium text-navy-400 hover:text-navy-700 transition-colors px-2 py-1 rounded hover:bg-navy-100">
+                    Batal
+                </button>
+            </div>
+            <div class="card-body">
+                <form wire:submit="updateCustomer" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label">Nama Perusahaan</label>
+                        <input type="text" wire:model="edit_nama_perusahaan" placeholder="Nama perusahaan" class="form-input">
+                        @error('edit_nama_perusahaan') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Username Login</label>
+                        <input type="text" wire:model="edit_username" placeholder="Username login" class="form-input" autocomplete="off">
+                        @error('edit_username') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Password Baru <span class="font-normal normal-case text-navy-400">(opsional)</span></label>
+                        <input type="password" wire:model="edit_password" placeholder="Kosongkan jika tidak diubah" class="form-input" autocomplete="new-password">
+                        @error('edit_password') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="sm:col-span-3 flex gap-3 justify-end">
+                        <button type="button" wire:click="cancelEdit" class="btn-secondary">Batal</button>
+                        <button type="submit" class="btn-primary text-navy-900">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Customer cards grid ── --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach($customers as $c)
+            <div class="card p-5 flex flex-col gap-3">
+                {{-- Top: name + status --}}
+                <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-navy-900 truncate">{{ $c->nama_perusahaan }}</p>
+                        <p class="text-xs text-navy-400 mt-0.5">
+                            {{ $c->user ? '@'.$c->user->username : 'Belum ada akun' }}
+                        </p>
+                    </div>
+                    <span @class([
+                        'badge flex-shrink-0',
+                        'badge-green' => $c->status === 'ACTIVE',
+                        'badge-gray'  => $c->status === 'INACTIVE',
+                    ])>{{ $c->status }}</span>
                 </div>
-                <div class="flex gap-3 mt-3">
-                    <button wire:click="select({{ $c->id }})" class="text-sm text-indigo-600 font-medium">Buka</button>
-                    <button wire:click="edit({{ $c->id }})" class="text-sm text-blue-600">Edit</button>
-                    <button wire:click="toggleStatus({{ $c->id }})" class="text-sm text-gray-500">
+
+                {{-- Divider --}}
+                <div class="border-t border-navy-50"></div>
+
+                {{-- Actions --}}
+                <div class="flex items-center gap-4">
+                    <button wire:click="select({{ $c->id }})"
+                            class="text-sm font-semibold text-gold-600 hover:text-gold-800 transition-colors">
+                        Buka
+                    </button>
+                    <button wire:click="edit({{ $c->id }})"
+                            class="text-sm font-medium text-navy-500 hover:text-navy-800 transition-colors">
+                        Edit
+                    </button>
+                    <button wire:click="toggleStatus({{ $c->id }})"
+                            class="text-sm font-medium text-navy-400 hover:text-navy-700 transition-colors ml-auto">
                         {{ $c->status === 'ACTIVE' ? 'Nonaktifkan' : 'Aktifkan' }}
                     </button>
                 </div>

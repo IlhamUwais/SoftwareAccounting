@@ -1,39 +1,92 @@
 <div>
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">Penjualan / Omzet</h2>
-        <button wire:click="$toggle('showForm')" class="text-sm bg-indigo-600 text-white rounded px-3 py-1.5">+ Input Omzet</button>
+    {{-- ── Header ── --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+            <h1 class="page-title">Penjualan / Omzet</h1>
+            <p class="page-subtitle">Pencatatan omzet penjualan per periode</p>
+        </div>
+        <button wire:click="$toggle('showForm')" class="btn-primary text-navy-900 self-start">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Input Omzet
+        </button>
     </div>
 
-    @if(session('status')) <div class="mb-3 text-sm text-green-700 bg-green-50 rounded p-2">{{ session('status') }}</div> @endif
-
-    @if($showForm)
-        <form wire:submit="save" class="bg-white rounded-lg shadow p-4 mb-4 grid grid-cols-4 gap-3">
-            <select wire:model="periode_bulan" class="rounded border-gray-300 text-sm">
-                @foreach(range(1,12) as $m) <option value="{{ $m }}">{{ \Carbon\Carbon::create(null, $m)->translatedFormat('F') }}</option> @endforeach
-            </select>
-            <input type="number" wire:model="periode_tahun" class="rounded border-gray-300 text-sm">
-            <input type="number" step="0.01" wire:model="nominal" placeholder="Nominal" class="rounded border-gray-300 text-sm">
-            <button type="submit" class="bg-indigo-600 text-white rounded text-sm">Simpan</button>
-        </form>
+    {{-- Flash --}}
+    @if(session('status'))
+        <div class="alert-success mb-4">{{ session('status') }}</div>
     @endif
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="w-full text-sm">
-            <thead><tr class="text-left text-gray-500 border-b bg-gray-50">
-                <th class="py-2 px-3">Periode</th><th class="py-2 px-3">Nominal</th><th class="py-2 px-3">Aksi</th>
-            </tr></thead>
-            <tbody>
-                @foreach($entries as $e)
-                    <tr class="border-b">
-                        <td class="py-2 px-3">{{ \Carbon\Carbon::create($e->periode_tahun, $e->periode_bulan)->translatedFormat('F Y') }}</td>
-                        <td class="py-2 px-3">Rp {{ number_format($e->nominal, 0, ',', '.') }}</td>
-                        <td class="py-2 px-3">
-                            <button wire:click="delete({{ $e->id }})" wire:confirm="Hapus entry ini?" class="text-red-600 hover:underline">Hapus</button>
-                        </td>
+    {{-- ── Add form ── --}}
+    @if($showForm)
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="text-sm font-semibold text-navy-800">Input Omzet Baru</h2>
+            </div>
+            <div class="card-body">
+                <form wire:submit="save" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="form-label">Bulan</label>
+                        <select wire:model="periode_bulan" class="form-select">
+                            @foreach(range(1,12) as $m)
+                                <option value="{{ $m }}">{{ \Carbon\Carbon::create(null, $m)->translatedFormat('F') }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Tahun</label>
+                        <input type="number" wire:model="periode_tahun" placeholder="Tahun" class="form-input tabular">
+                        @error('periode_tahun') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="form-label">Nominal</label>
+                        <input type="number" step="0.01" wire:model="nominal" placeholder="Nominal omzet" class="form-input tabular">
+                        @error('nominal') <p class="form-error">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <button type="submit" class="btn-primary text-navy-900 w-full justify-center py-2.5">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Table ── --}}
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Periode</th>
+                        <th class="text-right">Nominal</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach($entries as $e)
+                        <tr>
+                            <td class="font-medium text-navy-800">
+                                {{ \Carbon\Carbon::create($e->periode_tahun, $e->periode_bulan)->translatedFormat('F Y') }}
+                            </td>
+                            <td class="text-right tabular font-semibold text-navy-900">
+                                Rp {{ number_format($e->nominal, 0, ',', '.') }}
+                            </td>
+                            <td class="text-center">
+                                <button wire:click="delete({{ $e->id }})"
+                                        wire:confirm="Hapus entry ini?"
+                                        class="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">
+                                    Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
-    <div class="mt-4">{{ $entries->links() }}</div>
+
+    <div class="mt-5">{{ $entries->links() }}</div>
 </div>
