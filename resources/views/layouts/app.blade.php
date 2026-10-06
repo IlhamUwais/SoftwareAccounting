@@ -273,6 +273,8 @@
         }
     </script>
 
+    @include('partials.toast-container')
+
     @livewireScripts
 </body>
 </html>

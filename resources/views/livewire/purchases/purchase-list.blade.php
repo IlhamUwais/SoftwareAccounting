@@ -22,14 +22,6 @@
         </div>
     </div>
 
-    {{-- Flash messages --}}
-    @if(session('status'))
-        <div class="alert-success mb-4">{{ session('status') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert-error mb-4">{{ session('error') }}</div>
-    @endif
-
     {{-- ── Table card ── --}}
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">

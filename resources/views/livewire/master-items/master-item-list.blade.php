@@ -12,11 +12,6 @@
         </label>
     </div>
 
-    {{-- Flash --}}
-    @if(session('status'))
-        <div class="alert-success mb-4">{{ session('status') }}</div>
-    @endif
-
     {{-- Search --}}
     <div class="mb-4 relative">
         <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">

@@ -6,11 +6,6 @@
         <p class="page-subtitle">Informasi akun dan pengaturan kata sandi Anda</p>
     </div>
 
-    {{-- Flash --}}
-    @if(session('status'))
-        <div class="alert-success mb-5">{{ session('status') }}</div>
-    @endif
-
     {{-- ── Account info ── --}}
     <div class="card mb-5">
         <div class="card-header">
@@ -39,6 +34,10 @@
                     <div>
                         <dt class="text-xs font-semibold text-navy-500 uppercase tracking-wide mb-1">Perusahaan</dt>
                         <dd class="text-sm font-medium text-navy-900">{{ $user->customer->nama_perusahaan }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-semibold text-navy-500 uppercase tracking-wide mb-1">NPWP</dt>
+                        <dd class="text-sm font-medium text-navy-900 font-mono">{{ $user->customer->npwp ?: '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-semibold text-navy-500 uppercase tracking-wide mb-1">Status Akun</dt>
