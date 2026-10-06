@@ -31,7 +31,7 @@
            :class="{
                'w-70': !collapsed || mobileOpen,
                'w-[4.5rem]': collapsed && !mobileOpen,
-               '-translate-x-full lg:translate-x-0': !mobileOpen && collapsed && isSmall,
+               '-translate-x-full lg:translate-x-0': !mobileOpen && isSmall,
                'translate-x-0': mobileOpen || !isSmall
            }"
            x-cloak>
@@ -163,7 +163,7 @@
         <div class="flex-shrink-0 border-t border-navy-800 px-3 py-3">
             <a href="{{ route('profile') }}" wire:navigate
                class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-navy-700 transition-colors duration-200 group"
-               :title="collapsed && !mobileOpen ? '{{ auth()->user()->username }}' : ''">
+               :title="collapsed && !mobileOpen ? @js(auth()->user()->username) : ''">
                 {{-- Avatar --}}
                 <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gold-500 flex items-center justify-center">
                     <span class="text-navy-900 text-xs font-bold uppercase">{{ substr(auth()->user()->username, 0, 1) }}</span>

@@ -6,6 +6,9 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -17,6 +20,7 @@ class CustomerList extends Component
     public string $username = '';
     public string $password = '';
     public bool $showForm = false;
+    public bool $showTrashed = false;
 
     public ?int $editingCustomerId = null;
     public string $edit_nama_perusahaan = '';
@@ -36,10 +40,9 @@ class CustomerList extends Component
 
         $this->validate([
             'nama_perusahaan' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username',
-            'password' => 'required|string|min:8',
+            'username' => 'required|string|min:3|max:50|alpha_dash|unique:users,username',
+            'password' => ['required', 'string', Password::min(10)->mixedCase()->numbers()],
             'npwp' => 'required|string|max:255',
-            
         ]);
 
         $customer = Customer::create(['nama_perusahaan' => $this->nama_perusahaan, 'npwp' => $this->npwp]);
@@ -81,8 +84,8 @@ class CustomerList extends Component
 
         $this->validate([
             'edit_nama_perusahaan' => 'required|string|max:255',
-            'edit_username' => 'required|string|max:255|unique:users,username,' . $userId,
-            'edit_password' => 'nullable|string|min:8',
+            'edit_username' => ['required', 'string', 'min:3', 'max:50', 'alpha_dash', Rule::unique('users', 'username')->ignore($userId)],
+            'edit_password' => ['nullable', 'string', Password::min(10)->mixedCase()->numbers()],
             'edit_npwp' => 'required|string|max:255',
         ]);
 
@@ -120,10 +123,39 @@ class CustomerList extends Component
         return $this->redirect(route('dashboard'), navigate: true);
     }
 
+    public function delete(int $customerId): void
+    {
+        $customer = Customer::findOrFail($customerId);
+        $this->authorize('delete', $customer);
+        $customer->delete();
+        session()->flash('status', 'Customer berhasil dihapus.');
+    }
+
+    public function restore(int $customerId): void
+    {
+        $customer = Customer::onlyTrashed()->findOrFail($customerId);
+        $this->authorize('restore', $customer);
+
+        $conflict = Customer::where('npwp', $customer->npwp)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'npwp' => 'NPWP ini sudah dipakai oleh customer aktif lain. Tidak bisa memulihkan.',
+            ]);
+        }
+
+        $customer->restore();
+        session()->flash('status', 'Customer berhasil dipulihkan.');
+    }
+
     public function render()
     {
         return view('livewire.customers.customer-list', [
-            'customers' => Customer::with('user')->orderBy('nama_perusahaan')->get(),
+            'customers' => Customer::with('user')
+                ->when($this->showTrashed, fn ($q) => $q->onlyTrashed())
+                ->orderBy('nama_perusahaan')->get(),
         ]);
     }
 }
