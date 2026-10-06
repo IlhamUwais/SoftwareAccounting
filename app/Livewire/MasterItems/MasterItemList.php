@@ -2,8 +2,10 @@
 
 namespace App\Livewire\MasterItems;
 
+use App\Livewire\Concerns\RequiresActingCustomer;
 use App\Models\MasterItem;
 use App\Support\TenantContext;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,14 +13,44 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class MasterItemList extends Component
 {
-    use WithPagination;
+    use WithPagination, RequiresActingCustomer;
 
     public string $search = '';
     public bool $showTrashed = false;
 
+    public function mount(): void
+    {
+        $this->ensureCustomerSelected();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function updatedShowTrashed(): void
     {
         $this->resetPage();
+    }
+
+    public function restore(int $id): void
+    {
+        $item = MasterItem::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $item);
+
+        $conflict = MasterItem::where('customer_id', $item->customer_id)
+            ->where('nama_barang', $item->nama_barang)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'nama_barang' => 'Nama barang ini sudah dipakai oleh barang aktif lain. Tidak bisa memulihkan.',
+            ]);
+        }
+
+        $item->restore();
+        session()->flash('status', 'Barang berhasil dipulihkan.');
     }
 
     public function delete(int $id): void
@@ -27,14 +59,6 @@ class MasterItemList extends Component
         $this->authorize('delete', $item);
         $item->delete();
         session()->flash('status', 'Barang berhasil dihapus.');
-    }
-
-    public function restore(int $id): void
-    {
-        $item = MasterItem::onlyTrashed()->findOrFail($id);
-        $this->authorize('restore', $item);
-        $item->restore();
-        session()->flash('status', 'Barang berhasil dipulihkan.');
     }
 
     public function render()

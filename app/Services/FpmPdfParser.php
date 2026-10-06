@@ -193,7 +193,7 @@ private function extractSupplier(string $text): array
 
 private function extractLabeledAmount(string $text, string $labelPattern): ?string
 {
-    if (preg_match('/'.$labelPattern.'[^\t\n]*\t+([0-9.,]+)/iu', $text, $m)) {
+    if (preg_match('/'.$labelPattern.'[^\t\n]*(?:\t+|[ ]{2,})([0-9.,]+)/iu', $text, $m)) {
         return $this->toDecimal($m[1]);
     }
 

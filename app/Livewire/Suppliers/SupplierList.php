@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Suppliers;
 
+use App\Livewire\Concerns\RequiresActingCustomer;
 use App\Models\Supplier;
 use App\Support\TenantContext;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -11,13 +14,18 @@ use Livewire\WithPagination;
 #[Layout('layouts.app')]
 class SupplierList extends Component
 {
-    use WithPagination;
+    use WithPagination, RequiresActingCustomer;
 
     public string $nama = '';
     public string $npwp = '';
     public ?string $alamat = null;
     public bool $showForm = false;
     public bool $showTrashed = false;
+
+    public function mount(): void
+    {
+        $this->ensureCustomerSelected();
+    }
 
     public function updatedShowTrashed(): void
     {
@@ -28,9 +36,18 @@ class SupplierList extends Component
     {
         $this->authorize('create', Supplier::class);
 
+        $customerId = TenantContext::currentCustomerId();
+
         $this->validate([
             'nama' => 'required|string|max:255',
-            'npwp' => 'required|string|max:32',
+            'npwp' => [
+                'required',
+                'string',
+                'max:32',
+                Rule::unique('suppliers', 'npwp')
+                    ->where('customer_id', $customerId)
+                    ->whereNull('deleted_at'),
+            ],
             'alamat' => 'nullable|string',
         ]);
 
@@ -57,6 +74,18 @@ class SupplierList extends Component
     {
         $supplier = Supplier::onlyTrashed()->findOrFail($id);
         $this->authorize('restore', $supplier);
+
+        $conflict = Supplier::where('customer_id', $supplier->customer_id)
+            ->where('npwp', $supplier->npwp)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($conflict) {
+            throw ValidationException::withMessages([
+                'npwp' => 'NPWP ini sudah dipakai oleh supplier aktif lain. Tidak bisa memulihkan.',
+            ]);
+        }
+
         $supplier->restore();
         session()->flash('status', 'Supplier berhasil dipulihkan.');
     }
