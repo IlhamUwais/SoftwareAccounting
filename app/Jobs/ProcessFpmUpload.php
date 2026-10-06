@@ -22,6 +22,13 @@ class ProcessFpmUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    // handle() already catches everything it reasonably can, so a retry
+    // would just redo the same failing parse; only a timeout/worker crash
+    // should ever reach failed() below.
+    public int $tries = 1;
+
+    public int $timeout = 120;
+
     public function __construct(
         private readonly int $importFileId,
         private readonly int $customerId,
@@ -68,6 +75,29 @@ class ProcessFpmUpload implements ShouldQueue
         } finally {
             @unlink($this->tmpPath);
         }
+    }
+
+    /**
+     * Called by the queue worker when the job dies without handle()
+     * completing (timeout, worker crash, OOM) - without this, the batch
+     * would be stuck PROCESSING forever since nothing else ever updates it.
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        $importFile = ImportFile::find($this->importFileId);
+
+        if (! $importFile || $importFile->status !== 'PROCESSING') {
+            return;
+        }
+
+        $importFile->update([
+            'status' => 'FAILED',
+            'failure_reason' => 'Proses gagal (timeout atau kesalahan sistem). Silakan coba unggah ulang.',
+        ]);
+
+        $this->incrementBatchCounter($importFile->import_batch_id, success: false);
+
+        @unlink($this->tmpPath);
     }
 
     private function incrementBatchCounter(int $batchId, bool $success): void

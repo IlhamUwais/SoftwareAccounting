@@ -7,8 +7,10 @@ use App\Models\MasterItem;
 use App\Models\Purchase;
 use App\Models\PurchaseDocument;
 use App\Models\Supplier;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PurchaseUploadService
 {
@@ -52,56 +54,77 @@ class PurchaseUploadService
             throw new FpmParseException("Nomor faktur {$parsed['nomor_faktur']} sudah ada (duplicate).");
         }
 
-        return DB::transaction(function () use ($customerId, $uploadedByUserId, $absoluteTmpPath, $originalFilename, $parsed) {
-            $supplier = Supplier::findOrCreateForCustomer(
-                $customerId,
-                $parsed['supplier']['nama'],
-                $parsed['supplier']['npwp'],
-                $parsed['supplier']['alamat'],
-            );
+        $diskPath = null;
 
-            // Store the original PDF (private disk - only SuperAdmin can
-            // ever be authorized to view/download it, see FileAccessController).
-            $diskPath = "purchase-documents/{$customerId}/".uniqid().'.pdf';
-            Storage::disk(config('filesystems.default'))->put($diskPath, file_get_contents($absoluteTmpPath));
+        try {
+            return DB::transaction(function () use ($customerId, $uploadedByUserId, $absoluteTmpPath, $originalFilename, $parsed, &$diskPath) {
+                $supplier = Supplier::findOrCreateForCustomer(
+                    $customerId,
+                    $parsed['supplier']['nama'],
+                    $parsed['supplier']['npwp'],
+                    $parsed['supplier']['alamat'],
+                );
 
-            $document = PurchaseDocument::create([
-                'file_reference' => $diskPath,
-                'original_filename' => $originalFilename,
-                'uploaded_by' => $uploadedByUserId,
-            ]);
+                // Store the original PDF (private disk - only SuperAdmin can
+                // ever be authorized to view/download it, see FileAccessController).
+                // Random filename (not uniqid(), which is time-based and
+                // guessable) so a stored file path can't be brute-forced.
+                $diskPath = "purchase-documents/{$customerId}/".Str::random(40).'.pdf';
+                Storage::disk(config('filesystems.default'))->put($diskPath, file_get_contents($absoluteTmpPath));
 
-            $purchase = Purchase::create([
-                'customer_id' => $customerId,
-                'supplier_id' => $supplier->id,
-                'supplier_nama_snapshot' => $supplier->nama,
-                'supplier_npwp_snapshot' => $supplier->npwp,
-                'supplier_alamat_snapshot' => $supplier->alamat,
-                'nomor_faktur' => $parsed['nomor_faktur'],
-                'tanggal_faktur' => $parsed['tanggal_faktur'],
-                'termin' => $parsed['termin'] ?? '0',
-                'potongan' => $parsed['potongan'] ?? '0',
-                'uang_muka' => $parsed['uang_muka'], // nullable - only shown if present
-                'dpp' => $parsed['dpp'] ?? '0',
-                'ppn' => $parsed['ppn'] ?? '0',
-                'purchase_document_id' => $document->id,
-            ]);
-
-            $document->update(['purchase_id' => $purchase->id]);
-
-            foreach ($parsed['items'] as $item) {
-                $masterItem = MasterItem::findOrCreateForCustomer($customerId, $item['nama_barang']);
-
-                $purchase->details()->create([
-                    'master_item_id' => $masterItem->id,
-                    'nama_barang_snapshot' => $item['nama_barang'],
-                    'harga_satuan' => $item['harga_satuan'],
-                    'quantity' => $item['quantity'],
-                    'satuan' => $item['satuan'],
+                $document = PurchaseDocument::create([
+                    'file_reference' => $diskPath,
+                    'original_filename' => $originalFilename,
+                    'uploaded_by' => $uploadedByUserId,
                 ]);
+
+                $purchase = Purchase::create([
+                    'customer_id' => $customerId,
+                    'supplier_id' => $supplier->id,
+                    'supplier_nama_snapshot' => $supplier->nama,
+                    'supplier_npwp_snapshot' => $supplier->npwp,
+                    'supplier_alamat_snapshot' => $supplier->alamat,
+                    'nomor_faktur' => $parsed['nomor_faktur'],
+                    'tanggal_faktur' => $parsed['tanggal_faktur'],
+                    'termin' => $parsed['termin'] ?? '0',
+                    'potongan' => $parsed['potongan'] ?? '0',
+                    'uang_muka' => $parsed['uang_muka'], // nullable - only shown if present
+                    'dpp' => $parsed['dpp'] ?? '0',
+                    'ppn' => $parsed['ppn'] ?? '0',
+                    'purchase_document_id' => $document->id,
+                ]);
+
+                $document->update(['purchase_id' => $purchase->id]);
+
+                foreach ($parsed['items'] as $item) {
+                    $masterItem = MasterItem::findOrCreateForCustomer($customerId, $item['nama_barang']);
+
+                    $purchase->details()->create([
+                        'master_item_id' => $masterItem->id,
+                        'nama_barang_snapshot' => $item['nama_barang'],
+                        'harga_satuan' => $item['harga_satuan'],
+                        'quantity' => $item['quantity'],
+                        'satuan' => $item['satuan'],
+                    ]);
+                }
+
+                return $purchase;
+            });
+        } catch (QueryException $e) {
+            // Race condition fallback: two uploads of the same nomor_faktur
+            // can both pass the pre-check above before either commits. The
+            // partial unique index then rejects the second one at the DB
+            // level (Postgres unique_violation) - turn that into the same
+            // friendly message instead of a raw 500.
+            if ($diskPath !== null) {
+                Storage::disk(config('filesystems.default'))->delete($diskPath);
             }
 
-            return $purchase;
-        });
+            if (($e->errorInfo[0] ?? null) === '23505') {
+                throw new FpmParseException("Nomor faktur {$parsed['nomor_faktur']} sudah ada (duplicate).");
+            }
+
+            throw $e;
+        }
     }
 }
