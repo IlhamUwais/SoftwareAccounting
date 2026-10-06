@@ -31,4 +31,9 @@ class SalesEntryPolicy
     {
         return $user->isSuperAdmin();
     }
+
+    public function restore(User $user, SalesEntry $entry): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

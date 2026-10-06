@@ -13,7 +13,16 @@ class SptPaymentProofPolicy
             return true;
         }
 
-        return $user->customer_id === $proof->sptDocument->customer_id;
+        // The parent SPT may have been soft-deleted; still resolve it so a
+        // customer with a still-visible proof row doesn't hit a null-object
+        // error instead of a clean "not authorized".
+        $spt = $proof->sptDocument()->withTrashed()->first();
+
+        if (! $spt) {
+            return false;
+        }
+
+        return $user->customer_id === $spt->customer_id;
     }
 
     // Bukti bayar can be added/replaced any time after the SPT already
@@ -25,6 +34,11 @@ class SptPaymentProofPolicy
     }
 
     public function delete(User $user, SptPaymentProof $proof): bool
+    {
+        return $user->isSuperAdmin();
+    }
+
+    public function restore(User $user, SptPaymentProof $proof): bool
     {
         return $user->isSuperAdmin();
     }

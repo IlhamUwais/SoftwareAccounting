@@ -29,4 +29,14 @@ class CustomerPolicy
     {
         return $user->isSuperAdmin();
     }
+
+    public function delete(User $user, Customer $customer): bool
+    {
+        return $user->isSuperAdmin();
+    }
+
+    public function restore(User $user, Customer $customer): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }

@@ -31,4 +31,9 @@ class SptDocumentPolicy
     {
         return $user->isSuperAdmin();
     }
+
+    public function restore(User $user, SptDocument $spt): bool
+    {
+        return $user->isSuperAdmin();
+    }
 }
