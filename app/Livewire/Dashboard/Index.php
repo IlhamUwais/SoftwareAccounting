@@ -8,6 +8,7 @@ use App\Models\SptDocument;
 use App\Support\TenantContext;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 #[Layout('layouts.app')]
@@ -15,6 +16,8 @@ class Index extends Component
 {
     public string $fromMonth;
     public string $toMonth;
+
+    #[Locked]
     public ?int $selectedSupplierId = null;
 
     public function mount(): void
@@ -22,6 +25,24 @@ class Index extends Component
         // Default range: current month only.
         $this->fromMonth = now()->format('Y-m');
         $this->toMonth = now()->format('Y-m');
+    }
+
+    public function selectSupplier(?int $supplierId): void
+    {
+        $this->selectedSupplierId = $supplierId;
+    }
+
+    /**
+     * The chart lives in a wire:ignore'd subtree (so Chart.js isn't
+     * destroyed/recreated on every render), which means it never sees new
+     * data on its own when fromMonth/toMonth change. Push fresh data to it
+     * via a browser event the Alpine component listens for instead.
+     */
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['fromMonth', 'toMonth'], true)) {
+            $this->dispatch('omzet-chart-updated', chart: $this->omzetChart);
+        }
     }
 
     private function customerId(): ?int
@@ -135,6 +156,8 @@ class Index extends Component
 
         return SptDocument::where('customer_id', $this->customerId())
             ->overlapsPeriod($start, $end)
+            ->with('paymentProofs')
+            ->orderBy('period_start')
             ->get();
     }
 

@@ -97,7 +97,8 @@
             <h2 class="text-sm font-semibold text-navy-800">Grafik Omzet</h2>
         </div>
         <div class="card-body">
-            <div wire:ignore x-data="omzetChart(@js($omzetChart))" x-init="render()">
+            <div wire:ignore x-data="omzetChart(@js($omzetChart))" x-init="init()"
+                 x-on:omzet-chart-updated.window="update($event.detail.chart)">
                 <canvas x-ref="canvas" height="80"></canvas>
             </div>
         </div>
@@ -121,7 +122,7 @@
                 <tbody>
                     @forelse($supplierTable as $row)
                         <tr class="cursor-pointer"
-                            wire:click="$set('selectedSupplierId', {{ $row->supplier->id }})">
+                            wire:click="selectSupplier({{ $row->supplier->id }})">
                             <td class="font-medium text-navy-700">{{ $row->supplier->nama }}</td>
                             <td class="text-right tabular text-navy-700">Rp {{ number_format($row->total_termin, 0, ',', '.') }}</td>
                             <td class="text-right tabular text-navy-700">Rp {{ number_format($row->total_ppn, 0, ',', '.') }}</td>
@@ -142,7 +143,7 @@
         <div class="card mb-6 border-l-4 border-gold-500">
             <div class="card-header">
                 <h2 class="text-sm font-semibold text-navy-800">Detail Pembelian</h2>
-                <button wire:click="$set('selectedSupplierId', null)"
+                <button wire:click="selectSupplier(null)"
                         class="text-xs font-medium text-navy-400 hover:text-navy-700 transition-colors px-2 py-1 rounded hover:bg-navy-100">
                     Tutup
                 </button>
@@ -174,12 +175,28 @@
             <h2 class="text-sm font-semibold text-navy-800">SPT pada Periode Ini</h2>
         </div>
         <div class="card-body">
-            <ul class="space-y-2">
+            <ul class="space-y-3">
                 @forelse($sptList as $spt)
-                    <li class="flex items-center gap-3 text-sm">
-                        <div class="w-1.5 h-1.5 rounded-full bg-gold-500 flex-shrink-0"></div>
-                        <span class="text-navy-800 font-medium">{{ \App\Models\SptDocument::JENIS_OPTIONS[$spt->jenis_spt] }}</span>
-                        <span class="text-navy-400 text-xs">&mdash; {{ $spt->period_start->format('M Y') }} s/d {{ $spt->period_end->format('M Y') }}</span>
+                    <li class="text-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-gold-500 flex-shrink-0"></div>
+                            <span class="text-navy-800 font-medium">{{ \App\Models\SptDocument::JENIS_OPTIONS[$spt->jenis_spt] }}</span>
+                            <span class="text-navy-400 text-xs">&mdash; {{ $spt->period_start->format('M Y') }} s/d {{ $spt->period_end->format('M Y') }}</span>
+                        </div>
+                        <div class="mt-1.5 ml-4.5 flex flex-wrap items-center gap-2">
+                            <a href="{{ route('files.spt', $spt) }}"
+                               class="inline-flex items-center gap-1 text-xs font-medium text-navy-600 hover:text-navy-900 bg-navy-50 hover:bg-navy-100 rounded-full px-3 py-1.5 transition-colors">
+                                <span class="truncate max-w-[10rem]">{{ $spt->original_filename }}</span>
+                                <span aria-hidden="true">&darr;</span>
+                            </a>
+                            @foreach($spt->paymentProofs as $proof)
+                                <a href="{{ route('files.spt-proof', $proof) }}"
+                                   class="inline-flex items-center gap-1 text-xs font-medium text-gold-700 hover:text-gold-900 bg-gold-50 hover:bg-gold-100 rounded-full px-3 py-1.5 transition-colors">
+                                    <span class="truncate max-w-[10rem]">Bukti bayar: {{ $proof->original_filename }}</span>
+                                    <span aria-hidden="true">&darr;</span>
+                                </a>
+                            @endforeach
+                        </div>
                     </li>
                 @empty
                     <li class="text-navy-400 text-sm">Tidak ada SPT pada periode ini.</li>
@@ -191,8 +208,9 @@
     <script>
         function omzetChart(data) {
             return {
-                render() {
-                    new Chart(this.$refs.canvas, {
+                chartInstance: null,
+                init() {
+                    this.chartInstance = new Chart(this.$refs.canvas, {
                         type: 'line',
                         data: {
                             labels: data.labels,
@@ -230,7 +248,17 @@
                             }
                         },
                     });
-                }
+
+                    this.$root.addEventListener('alpine:destroy', () => {
+                        this.chartInstance?.destroy();
+                    });
+                },
+                update(chart) {
+                    if (! this.chartInstance) return;
+                    this.chartInstance.data.labels = chart.labels;
+                    this.chartInstance.data.datasets[0].data = chart.values;
+                    this.chartInstance.update();
+                },
             }
         }
     </script>
