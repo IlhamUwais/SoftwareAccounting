@@ -97,8 +97,7 @@
             <h2 class="text-sm font-semibold text-navy-800">Grafik Omzet</h2>
         </div>
         <div class="card-body">
-            <div wire:ignore x-data="omzetChart(@js($omzetChart))" x-init="init()"
-                 x-on:omzet-chart-updated.window="update($event.detail.chart)">
+            <div wire:ignore x-data="omzetChart($wire)" x-init="init()">
                 <canvas x-ref="canvas" height="80"></canvas>
             </div>
         </div>
@@ -206,17 +205,24 @@
     </div>
 
     <script>
-        function omzetChart(data) {
+        function omzetChart($wire) {
             return {
                 chartInstance: null,
+                // Entangled directly here (not passed in as a plain
+                // argument) so Alpine's reactivity picks it up when this
+                // object is turned into the component's x-data - this is
+                // what keeps it live inside a wire:ignore'd subtree even
+                // though Livewire never touches this DOM again after the
+                // first render.
+                chartData: $wire.entangle('omzetChartData'),
                 init() {
                     this.chartInstance = new Chart(this.$refs.canvas, {
                         type: 'line',
                         data: {
-                            labels: data.labels,
+                            labels: this.chartData.labels,
                             datasets: [{
                                 label: 'Omzet',
-                                data: data.values,
+                                data: this.chartData.values,
                                 borderColor: '#c8a84b',
                                 backgroundColor: 'rgba(200,168,75,0.08)',
                                 tension: 0.3,
@@ -252,9 +258,13 @@
                     this.$root.addEventListener('alpine:destroy', () => {
                         this.chartInstance?.destroy();
                     });
+
+                    // Re-render whenever the entangled server value changes
+                    // (fromMonth/toMonth filter change -> new omzetChartData).
+                    this.$watch('chartData', (value) => this.update(value));
                 },
                 update(chart) {
-                    if (! this.chartInstance) return;
+                    if (! this.chartInstance || ! chart) return;
                     this.chartInstance.data.labels = chart.labels;
                     this.chartInstance.data.datasets[0].data = chart.values;
                     this.chartInstance.update();

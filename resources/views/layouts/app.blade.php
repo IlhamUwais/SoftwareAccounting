@@ -111,50 +111,52 @@
                     <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Dashboard</span>
                 </a>
 
-                <a href="{{ route('purchases.index') }}" wire:navigate
-                   class="nav-link {{ request()->routeIs('purchases.*') ? 'active' : '' }}"
-                   :title="collapsed && !mobileOpen ? 'Pembelian' : ''">
-                    <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                    <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Pembelian</span>
-                </a>
+                @if(auth()->user()->isSuperAdmin())
+                    <a href="{{ route('purchases.index') }}" wire:navigate
+                       class="nav-link {{ request()->routeIs('purchases.*') ? 'active' : '' }}"
+                       :title="collapsed && !mobileOpen ? 'Pembelian' : ''">
+                        <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Pembelian</span>
+                    </a>
 
-                <a href="{{ route('suppliers.index') }}" wire:navigate
-                   class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}"
-                   :title="collapsed && !mobileOpen ? 'Supplier' : ''">
-                    <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Supplier</span>
-                </a>
+                    <a href="{{ route('suppliers.index') }}" wire:navigate
+                       class="nav-link {{ request()->routeIs('suppliers.*') ? 'active' : '' }}"
+                       :title="collapsed && !mobileOpen ? 'Supplier' : ''">
+                        <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Supplier</span>
+                    </a>
 
-                <a href="{{ route('master-items.index') }}" wire:navigate
-                   class="nav-link {{ request()->routeIs('master-items.*') ? 'active' : '' }}"
-                   :title="collapsed && !mobileOpen ? 'Master Barang' : ''">
-                    <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
-                    </svg>
-                    <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Master Barang</span>
-                </a>
+                    <a href="{{ route('master-items.index') }}" wire:navigate
+                       class="nav-link {{ request()->routeIs('master-items.*') ? 'active' : '' }}"
+                       :title="collapsed && !mobileOpen ? 'Master Barang' : ''">
+                        <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+                        </svg>
+                        <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Master Barang</span>
+                    </a>
 
-                <a href="{{ route('sales.index') }}" wire:navigate
-                   class="nav-link {{ request()->routeIs('sales.*') ? 'active' : '' }}"
-                   :title="collapsed && !mobileOpen ? 'Penjualan' : ''">
-                    <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                    </svg>
-                    <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Penjualan</span>
-                </a>
+                    <a href="{{ route('sales.index') }}" wire:navigate
+                       class="nav-link {{ request()->routeIs('sales.*') ? 'active' : '' }}"
+                       :title="collapsed && !mobileOpen ? 'Penjualan' : ''">
+                        <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">Penjualan</span>
+                    </a>
 
-                <a href="{{ route('spt.index') }}" wire:navigate
-                   class="nav-link {{ request()->routeIs('spt.*') ? 'active' : '' }}"
-                   :title="collapsed && !mobileOpen ? 'SPT' : ''">
-                    <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">SPT</span>
-                </a>
+                    <a href="{{ route('spt.index') }}" wire:navigate
+                       class="nav-link {{ request()->routeIs('spt.*') ? 'active' : '' }}"
+                       :title="collapsed && !mobileOpen ? 'SPT' : ''">
+                        <svg class="nav-link-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="nav-label whitespace-nowrap overflow-hidden" :class="collapsed && !mobileOpen ? 'opacity-0 w-0' : 'opacity-100'">SPT</span>
+                    </a>
+                @endif
             @endauth
         </nav>
 

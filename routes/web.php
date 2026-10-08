@@ -31,25 +31,30 @@ Route::middleware(['auth', 'ensure.customer.active'])->group(function () {
 
     Route::get('/', fn () => redirect()->route('dashboard'));
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
-
-    Route::get('/purchases', PurchaseList::class)->name('purchases.index');
-    Route::get('/purchases/upload', UploadFpm::class)->name('purchases.upload');
-    Route::get('/purchases/{purchase}/edit', PurchaseForm::class)->name('purchases.edit');
-
-    Route::get('/suppliers', SupplierList::class)->name('suppliers.index');
-    Route::get('/master-items', MasterItemList::class)->name('master-items.index');
-    Route::get('/sales', SalesEntryList::class)->name('sales.index');
-    Route::get('/spt', SptList::class)->name('spt.index');
     Route::get('/profile', UserProfile::class)->name('profile');
 
-    // File downloads - always authorization-checked in the controller.
+    // File downloads - always authorization-checked in the controller
+    // (SptDocument/SptPaymentProof policies already allow a CUSTOMER to
+    // view/download their own company's files - route-level SuperAdmin
+    // restriction below is only about the management screens).
     Route::get('/files/purchase-documents/{document}', [FileAccessController::class, 'purchaseDocument'])->name('files.purchase-document');
     Route::get('/files/spt/{spt}', [FileAccessController::class, 'spt'])->name('files.spt');
     Route::get('/files/spt-proofs/{proof}', [FileAccessController::class, 'sptProof'])->name('files.spt-proof');
 
-    // SuperAdmin only
+    // SuperAdmin only - a CUSTOMER account is limited to Dashboard and
+    // Profile; all data entry/management is done by the tax consultant
+    // (SuperAdmin) on the client's behalf.
     Route::middleware('role:SUPERADMIN')->group(function () {
         Route::get('/customers', CustomerList::class)->name('customers.index');
         Route::get('/audit-logs', AuditLogViewer::class)->name('audit-logs.index');
+
+        Route::get('/purchases', PurchaseList::class)->name('purchases.index');
+        Route::get('/purchases/upload', UploadFpm::class)->name('purchases.upload');
+        Route::get('/purchases/{purchase}/edit', PurchaseForm::class)->name('purchases.edit');
+
+        Route::get('/suppliers', SupplierList::class)->name('suppliers.index');
+        Route::get('/master-items', MasterItemList::class)->name('master-items.index');
+        Route::get('/sales', SalesEntryList::class)->name('sales.index');
+        Route::get('/spt', SptList::class)->name('spt.index');
     });
 });

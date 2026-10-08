@@ -20,11 +20,25 @@ class Index extends Component
     #[Locked]
     public ?int $selectedSupplierId = null;
 
+    /**
+     * A real (non-computed) public property, deliberately - the chart
+     * canvas lives in a wire:ignore'd subtree so Chart.js isn't destroyed
+     * and recreated on every render, which means it never picks up fresh
+     * data from a plain Blade/computed-property binding. Entangling THIS
+     * property with Alpine ($wire.entangle in the view) is what actually
+     * keeps it in sync: entangle updates through Livewire's JS-side store
+     * directly, independent of DOM morphing, so it still works inside
+     * wire:ignore - a dispatched browser event (the previous approach)
+     * does not reliably fire on every subsequent update and was dropped.
+     */
+    public array $omzetChartData = [];
+
     public function mount(): void
     {
         // Default range: current month only.
         $this->fromMonth = now()->format('Y-m');
         $this->toMonth = now()->format('Y-m');
+        $this->omzetChartData = $this->buildOmzetChart();
     }
 
     public function selectSupplier(?int $supplierId): void
@@ -32,16 +46,10 @@ class Index extends Component
         $this->selectedSupplierId = $supplierId;
     }
 
-    /**
-     * The chart lives in a wire:ignore'd subtree (so Chart.js isn't
-     * destroyed/recreated on every render), which means it never sees new
-     * data on its own when fromMonth/toMonth change. Push fresh data to it
-     * via a browser event the Alpine component listens for instead.
-     */
     public function updated(string $property): void
     {
         if (in_array($property, ['fromMonth', 'toMonth'], true)) {
-            $this->dispatch('omzet-chart-updated', chart: $this->omzetChart);
+            $this->omzetChartData = $this->buildOmzetChart();
         }
     }
 
@@ -129,7 +137,7 @@ class Index extends Component
             ->get();
     }
 
-    public function getOmzetChartProperty(): array
+    private function buildOmzetChart(): array
     {
         [$start, $end] = $this->periodBounds();
         $entries = SalesEntry::where('customer_id', $this->customerId())->get();
@@ -167,7 +175,6 @@ class Index extends Component
             'cards' => $this->cards,
             'supplierTable' => $this->supplierTable,
             'supplierDetail' => $this->supplierDetail,
-            'omzetChart' => $this->omzetChart,
             'sptList' => $this->sptList,
         ]);
     }
