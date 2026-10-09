@@ -208,21 +208,16 @@
         function omzetChart($wire) {
             return {
                 chartInstance: null,
-                // Entangled directly here (not passed in as a plain
-                // argument) so Alpine's reactivity picks it up when this
-                // object is turned into the component's x-data - this is
-                // what keeps it live inside a wire:ignore'd subtree even
-                // though Livewire never touches this DOM again after the
-                // first render.
-                chartData: $wire.entangle('omzetChartData'),
                 init() {
+                    const initial = $wire.omzetChartData;
+
                     this.chartInstance = new Chart(this.$refs.canvas, {
                         type: 'line',
                         data: {
-                            labels: this.chartData.labels,
+                            labels: initial.labels,
                             datasets: [{
                                 label: 'Omzet',
-                                data: this.chartData.values,
+                                data: initial.values,
                                 borderColor: '#c8a84b',
                                 backgroundColor: 'rgba(200,168,75,0.08)',
                                 tension: 0.3,
@@ -259,9 +254,11 @@
                         this.chartInstance?.destroy();
                     });
 
-                    // Re-render whenever the entangled server value changes
-                    // (fromMonth/toMonth filter change -> new omzetChartData).
-                    this.$watch('chartData', (value) => this.update(value));
+                    // $wire.$watch observes Livewire's own reactive data
+                    // store directly (not the DOM), so this keeps firing on
+                    // every fromMonth/toMonth change regardless of
+                    // wire:ignore on this element.
+                    $wire.$watch('omzetChartData', (value) => this.update(value));
                 },
                 update(chart) {
                     if (! this.chartInstance || ! chart) return;
